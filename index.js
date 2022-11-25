@@ -111,11 +111,40 @@ async function run() {
         });
 
 
-        //get all buyer
+        //get all buyers
         app.get('/allbuyers/:role', async (req, res) => {
             const role = req.params.role;
             const query = { role: role };
             const result = await Users.find(query).toArray();
+            res.send(result);
+        });
+
+        //get all sellers
+        app.get('/allsellers/:role', async (req, res) => {
+            const role = req.params.role;
+            const query = { role: role };
+            const result = await Users.find(query).toArray();
+            res.send(result);
+        });
+
+        //delete a users
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await Users.deleteOne(query);
+            res.send(result);
+        });
+
+        app.put('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    verify: true
+                },
+            };
+            const result = await Users.updateOne(filter, updateDoc, options);
             res.send(result);
         });
 
