@@ -83,7 +83,15 @@ async function run() {
             const email = req.params.email;
             const query = { email };
             const user = await Users.findOne(query);
-            res.send({ isSeller: user?.role === 'buyer' });
+            res.send({ isBuyer: user?.role === 'buyer' });
+        });
+
+        // buyer route
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await Users.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' });
         });
 
 
@@ -99,6 +107,15 @@ async function run() {
             const email = req.query.email;
             const query = { email: email };
             const result = await Orders.find(query).toArray();
+            res.send(result);
+        });
+
+
+        //get all buyer
+        app.get('/allbuyers/:role', async (req, res) => {
+            const role = req.params.role;
+            const query = { role: role };
+            const result = await Users.find(query).toArray();
             res.send(result);
         });
 
