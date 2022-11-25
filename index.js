@@ -78,7 +78,12 @@ async function run() {
             res.send({ isSeller: user?.role === 'seller' });
         });
 
-
+        //add orders
+        app.post('orders', async (req, res) => {
+            const order = req.body;
+            const result = await Orders.insertOne(order);
+            res.send(result);
+        });
 
 
     }
