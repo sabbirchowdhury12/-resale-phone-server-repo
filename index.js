@@ -70,7 +70,7 @@ async function run() {
         });
 
 
-        //find seller
+        //seller route
         app.get('/users/seller/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
@@ -78,10 +78,27 @@ async function run() {
             res.send({ isSeller: user?.role === 'seller' });
         });
 
+        // buyer route
+        app.get('/users/buyer/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await Users.findOne(query);
+            res.send({ isSeller: user?.role === 'buyer' });
+        });
+
+
         //add orders
-        app.post('orders', async (req, res) => {
+        app.post('/orders', async (req, res) => {
             const order = req.body;
             const result = await Orders.insertOne(order);
+            res.send(result);
+        });
+
+        //get my orders
+        app.get('/orders', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const result = await Orders.find(query).toArray();
             res.send(result);
         });
 
