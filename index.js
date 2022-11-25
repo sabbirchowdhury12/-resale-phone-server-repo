@@ -36,15 +36,27 @@ async function run() {
             res.send(result);
         });
 
+
+        //save user
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await Users.insertOne(user);
             res.send(result);
         });
 
+
+        //add product
         app.post('/products', async (req, res) => {
             const product = req.body;
             const result = await Products.insertOne(product);
+            res.send(result);
+        });
+
+        //get my products by email
+        app.get('/products', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const result = await Products.find(query).toArray();
             res.send(result);
         });
 
