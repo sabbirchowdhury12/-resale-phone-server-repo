@@ -21,6 +21,7 @@ async function run() {
         const Category = client.db('reSellPhone').collection('category');
         const Products = client.db('reSellPhone').collection('products');
         const Users = client.db('reSellPhone').collection('users');
+        const Orders = client.db('reSellPhone').collection('orders');
 
         //get all category from db
         app.get('/category', async (req, res) => {
@@ -67,6 +68,17 @@ async function run() {
             const result = await Products.deleteOne(query);
             res.send(result);
         });
+
+
+        //find seller
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await Users.findOne(query);
+            res.send({ isSeller: user?.role === 'seller' });
+        });
+
+
 
 
     }
