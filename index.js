@@ -20,6 +20,7 @@ async function run() {
 
         const Category = client.db('reSellPhone').collection('category');
         const Products = client.db('reSellPhone').collection('products');
+        const Users = client.db('reSellPhone').collection('users');
 
         //get all category from db
         app.get('/category', async (req, res) => {
@@ -34,6 +35,13 @@ async function run() {
             const result = await Products.find(query).toArray();
             res.send(result);
         });
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await Users.insertOne(user);
+            res.send(result);
+        });
+
 
     }
     finally {
