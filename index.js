@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config();
 // const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 //midleware
@@ -57,6 +57,14 @@ async function run() {
             const email = req.query.email;
             const query = { email: email };
             const result = await Products.find(query).toArray();
+            res.send(result);
+        });
+
+        //delete a product
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await Products.deleteOne(query);
             res.send(result);
         });
 
