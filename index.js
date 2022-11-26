@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
@@ -14,6 +14,26 @@ app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.PASSWORD}@cluster0.6jo974x.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+//verify token
+function verifyJWT(req, res, next) {
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send('unathorized access');
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'forbidden access' });
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
+
 
 async function run() {
     try {
@@ -54,8 +74,13 @@ async function run() {
         });
 
         //get my products by email
-        app.get('/products', async (req, res) => {
+        app.get('/products', verifyJWT, async (req, res) => {
             const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
             const query = { email: email };
             const result = await Products.find(query).toArray();
             res.send(result);
@@ -103,7 +128,7 @@ async function run() {
         });
 
         //get my orders
-        app.get('/orders', async (req, res) => {
+        app.get('/orders', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const result = await Orders.find(query).toArray();
@@ -135,6 +160,7 @@ async function run() {
             res.send(result);
         });
 
+        //update user verify
         app.put('/users/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -149,7 +175,33 @@ async function run() {
         });
 
 
+        //jwt
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            };
+            const user = await Users.findOne(query);
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '2 days' });
+                return res.send({ accessToken: token });
+            }
+            res.status(403).send({ accessToken: '' });
+        });
+
+
+
+
+
+
+
+
+
+
+
     }
+
+
     finally {
 
     }
