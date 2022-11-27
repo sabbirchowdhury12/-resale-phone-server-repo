@@ -65,6 +65,14 @@ async function run() {
             res.send(result);
         });
 
+        //get user by query
+        app.get('/users', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const result = await Users.findOne(query);
+            res.send(result);
+        });
+
 
         //add product
         app.post('/products', async (req, res) => {
@@ -167,7 +175,7 @@ async function run() {
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    verify: true
+                    status: "verified"
                 },
             };
             const result = await Users.updateOne(filter, updateDoc, options);
