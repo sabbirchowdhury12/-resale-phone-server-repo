@@ -3,13 +3,13 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 //midleware
 app.use(cors());
 app.use(express.json());
-
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.PASSWORD}@cluster0.6jo974x.mongodb.net/?retryWrites=true&w=majority`;
@@ -42,6 +42,7 @@ async function run() {
         const Products = client.db('reSellPhone').collection('products');
         const Users = client.db('reSellPhone').collection('users');
         const Orders = client.db('reSellPhone').collection('orders');
+        const Payment = client.db('reSellPhone').collection('payment');
 
         //get all category from db
         app.get('/category', async (req, res) => {
@@ -94,6 +95,29 @@ async function run() {
             res.send(result);
         });
 
+        //get advertise products
+        app.get('/products/:advertise', async (req, res) => {
+            const advertise = req.params.advertise;
+            const query = { saleStatus: advertise };
+            const result = await Products.find(query).toArray();
+            res.send(result);
+        });
+
+        //make advertise
+        app.put('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    saleStatus: "advertise"
+                },
+            };
+            const result = await Products.updateOne(filter, updateDoc, options);
+            res.send(result);
+        });
+
+
         //delete a product
         app.delete('/products/:id', async (req, res) => {
             const id = req.params.id;
@@ -135,6 +159,13 @@ async function run() {
             res.send(result);
         });
 
+
+        app.get('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await Orders.findOne(query);
+            res.send(result);
+        });
         //get my orders
         app.get('/orders', verifyJWT, async (req, res) => {
             const email = req.query.email;
@@ -168,17 +199,82 @@ async function run() {
             res.send(result);
         });
 
+        // //update user verify
+        // app.put('/users/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     console.log(id);
+        //     // const filter = { _id: ObjectId(id) };
+        //     // const options = { upsert: true };
+        //     // const updateDoc = {
+        //     //     $set: {
+        //     //         userStatus: "verified"
+        //     //     },
+        //     // };
+        //     // const result = await Users.updateOne(filter, updateDoc, options);
+        //     // res.send(result);
+        // });
+
         //update user verify
-        app.put('/users/:id', async (req, res) => {
-            const id = req.params.id;
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const id = user._id;
+            const email = user.email;
+            console.log(id, email);
             const filter = { _id: ObjectId(id) };
+            const filter2 = { email: email };
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    status: "verified"
+                    userStatus: "verified"
                 },
             };
+
             const result = await Users.updateOne(filter, updateDoc, options);
+            const productUpdated = await Products.updateMany(filter2, updateDoc, options);
+            res.send(result);
+        });
+
+        //google signin
+        app.post('/googleuser', async (req, res) => {
+            const user = req.body;
+            const result = await Users.insertOne(user);
+            res.send(result);
+        });
+
+        //payment
+        app.post('/create-payment-intent', async (req, res) => {
+            const order = req.body;
+            const price = order.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await Payment.insertOne(payment);
+            const productId = payment.productId;
+            const filter1 = { _id: ObjectId(productId) };
+            const id = payment.orderId;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            };
+            const updatedResult = await Orders.updateOne(filter, updatedDoc);
+            const updatedResult2 = await Products.updateOne(filter1, updatedDoc);
             res.send(result);
         });
 
@@ -196,17 +292,6 @@ async function run() {
             }
             res.status(403).send({ accessToken: '' });
         });
-
-
-
-
-
-
-
-
-
-
-
     }
 
 
