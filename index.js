@@ -235,8 +235,30 @@ async function run() {
         });
 
         //google signin
-        app.post('/googleuser', async (req, res) => {
+        app.put('/googleuser', async (req, res) => {
             const user = req.body;
+            const email = user.email;
+            const name = user.name;
+            const role = user.role;
+
+            const filter = {
+                name: name,
+                email: email,
+                role: role
+            };
+            const findUser = await Users.findOne(filter);
+            if (findUser) {
+                const options = { upsert: true };
+                const updatedDoc = {
+                    $set: {
+                        name: name,
+                        email: email,
+                        role: role
+                    }
+                };
+                const updatedResult = await Users.updateOne(filter, updatedDoc, options);
+                return res.send(updatedResult);
+            }
             const result = await Users.insertOne(user);
             res.send(result);
         });
