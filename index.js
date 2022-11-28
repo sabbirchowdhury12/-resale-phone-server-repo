@@ -334,7 +334,7 @@ async function run() {
 run().catch(err => console.log(err));
 
 app.get('/', async (req, res) => {
-    res.send('reseller project is running');
+    res.send('resele project is running');
 });
 
 app.listen(port, () => console.log('code is running'));
