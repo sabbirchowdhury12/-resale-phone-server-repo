@@ -43,6 +43,7 @@ async function run() {
         const Users = client.db('reSellPhone').collection('users');
         const Orders = client.db('reSellPhone').collection('orders');
         const Payment = client.db('reSellPhone').collection('payment');
+        const ReportedItems = client.db('reSellPhone').collection('reportedItems');
 
         //get all category from db
         app.get('/category', async (req, res) => {
@@ -160,7 +161,7 @@ async function run() {
         });
 
 
-        app.get('/orders/:id', async (req, res) => {
+        app.get('/orders/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await Orders.findOne(query);
@@ -199,20 +200,7 @@ async function run() {
             res.send(result);
         });
 
-        // //update user verify
-        // app.put('/users/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     console.log(id);
-        //     // const filter = { _id: ObjectId(id) };
-        //     // const options = { upsert: true };
-        //     // const updateDoc = {
-        //     //     $set: {
-        //     //         userStatus: "verified"
-        //     //     },
-        //     // };
-        //     // const result = await Users.updateOne(filter, updateDoc, options);
-        //     // res.send(result);
-        // });
+
 
         //update user verify
         app.put('/users', async (req, res) => {
@@ -260,6 +248,27 @@ async function run() {
                 return res.send(updatedResult);
             }
             const result = await Users.insertOne(user);
+            res.send(result);
+        });
+
+        //reported admin post
+        app.post('/reportedItem', async (req, res) => {
+            const item = req.body;
+            const result = await ReportedItems.insertOne(item);
+            res.send(result);
+        });
+
+        //reported admin get
+        app.get('/reportedItem', async (req, res) => {
+            const result = await ReportedItems.find({}).toArray();
+            res.send(result);
+        });
+
+        //reported admin delte
+        app.delete('/reportedItem/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await ReportedItems.deleteOne(query);
             res.send(result);
         });
 
